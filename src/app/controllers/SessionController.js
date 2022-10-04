@@ -5,7 +5,7 @@ class SessionControler {
   async store(request, response) {
     const schema = Yup.object().shape({
       email: Yup.string().email().required(),
-      password: Yup.String().required(),
+      password: Yup.string().required(),
     })
 
     if (!(await schema.isValid(request.body))) {
@@ -13,7 +13,7 @@ class SessionControler {
         .status(400)
         .json({ error: 'Make sure your password or email are correct' })
     }
-    const { email } = request.body
+    const { email, password } = request.body
 
     const user = await User.findOne({
       where: { email },
@@ -24,7 +24,19 @@ class SessionControler {
         .status(400)
         .json({ error: 'Make sure your password or email are correct' })
     }
-    return response.json(user)
+
+    if (!(await user.checkPassword(password))) {
+      return response
+        .status(401)
+        .json({ error: 'Make sure your password or email are correct' })
+    }
+
+    return response.json({
+      id: user.id,
+      email,
+      name: user.name,
+      admin: user.admin,
+    })
   }
 }
 
